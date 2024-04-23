@@ -1,0 +1,8 @@
+tensorflow_text
+pandas
+numpy
+yfinance
+
+matplotlib
+scikit-learn
+ta
