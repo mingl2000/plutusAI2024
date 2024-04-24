@@ -19,50 +19,18 @@ df['date'] = pd.to_datetime(df['date'], infer_datetime_format=True)
 df.set_index('date')[['Appliances', 'lights','T_out', 'RH_1', 'Visibility']].plot(subplots=True)
 '''
 ticker='XLK'
-interval='1h'
+interval='1d'
 df=GetYahooData_v2(ticker,1000,interval)
-df['flag']=np.where(df['Close'].diff(21)>0, True, False)
+df['flag']=np.where(df['Close'].diff(7)>0, 1, 0)
 '''
+binary classification
 # 1d data
-diff(6)/window_len=13: accuracy:42.5
-diff(7)/window_len=13: accuracy:80.1/70.166  Shuffule=True:74.48
-diff(8)/window_len=13: accuracy:55.8
-diff(11)/window_len=13: accuracy:67.9
-diff(13)/window_len=13: accuracy:41.4
+diff(7)/window_len=13: accuracy:79.56/70.166
+Test accuracy of the best model: 0.8729282021522522
+Test results - Loss: 1.2673572301864624 - Accuracy: 80.66298365592957%
 
-diff(3)/window_len=11: accuracy: Shuffule=True:49.48
-diff(5)/window_len=11: accuracy: Shuffule=True:76.56
-diff(6)/window_len=11: accuracy: Shuffule=True:82.81 //80.2//81.42
-diff(7)/window_len=11: accuracy: Shuffule=True:78.65
-
-
-diff(4)/window_len=9: accuracy: Shuffule=True: 44.86
-diff(5)/window_len=9: accuracy: Shuffule=True: 80.00
-diff(6)/window_len=9: accuracy: Shuffule=True: 81.08
-
-diff(4)/window_len=7: accuracy: Shuffule=True: 80.74
-diff(3)/window_len=7: accuracy: Shuffule=True: 75.4
-diff(5)/window_len=7: accuracy: Shuffule=True: 72.2
-
-
-diff(3)/window_len=5: accuracy: Shuffule=True: 75.6
-
-HOUR
-diff(3)/window_len=5: accuracy: Shuffule=True: 49.20
-diff(7)/window_len=13: accuracy: Shuffule=True: 49.20
-
-diff(18)/window_len=40: accuracy: Shuffule=True: 64.94
-diff(19)/window_len=40: accuracy: Shuffule=True: 77.27
-diff(20)/window_len=40: accuracy: Shuffule=True: 83.116
-diff(21)/window_len=40: accuracy: Shuffule=True: 84.41 //83.76 added with bolling band //82.46 (LSTM(256))
-diff(22)/window_len=40: accuracy: Shuffule=True: 29.87
-
-
-diff(10)/window_len=20: accuracy: Shuffule=True: 67.24
-
-
-30MIN
-diff(8)/window_len=16: accuracy: Shuffule=True: 73.13
+Test accuracy of the best model: 0.8729282021522522
+Test results - Loss: 1.0065486431121826 - Accuracy: 81.76795840263367%
 
 '''
 #df['flag2']=np.where(df['Close'].diff(2)>0, True, False)
@@ -95,7 +63,7 @@ x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=
 
 x_train.shape
 x_test.shape
-win_length=40
+win_length=13
 batch_size=32
 num_features=len(in_cols)
 train_generator = TimeseriesGenerator(x_train, y_train, length=win_length, sampling_rate=1, batch_size=batch_size)
@@ -132,7 +100,7 @@ model.compile(loss=tf.losses.MeanSquaredError(),
 '''
 ''' BinaryCrossentropy '''
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-loss = tf.keras.losses.BinaryCrossentropy()
+loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 model.compile(optimizer=optimizer, loss=loss,metrics=['accuracy'])
 '''
 history = model.fit(train_generator, epochs=500  ,
@@ -158,13 +126,13 @@ predictions=model.predict(test_generator)
 binary_predictions = (predictions > 0.5)
 df_final=df_input[predictions.shape[0]*-1:]
 df_final['App_Pred']=binary_predictions
-
+print('df_final:',df_final)
 
 test_results=model.evaluate(test_generator, verbose=0)  
 print(f'Test results - Loss: {test_results[0]} - Accuracy: {test_results[1]*100}%')
 
 
-print('df_final:',df_final)
+
 '''
 predictions.shape[0]
 print('predictions:',predictions)
