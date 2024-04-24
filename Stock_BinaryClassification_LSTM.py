@@ -18,7 +18,9 @@ df.info()
 df['date'] = pd.to_datetime(df['date'], infer_datetime_format=True)
 df.set_index('date')[['Appliances', 'lights','T_out', 'RH_1', 'Visibility']].plot(subplots=True)
 '''
-df=GetYahooData_v2('XLK',1000,'1h')
+ticker='XLK'
+interval='1h'
+df=GetYahooData_v2(ticker,1000,interval)
 df['flag']=np.where(df['Close'].diff(21)>0, True, False)
 '''
 # 1d data
@@ -118,7 +120,8 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',
                                                     patience=10,
                                                     mode='max')
 
-checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath='./best_model.keras', 
+modelfilepath='./{}_{}_best_model.keras'.format(ticker, interval)
+checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=modelfilepath, 
                                       monitor='val_accuracy', 
                                       save_best_only=True,
                                       mode='max')
@@ -144,19 +147,23 @@ history = model.fit(train_generator, epochs=500  ,
                     )
 
 # Load the best model
-best_model = tf.keras.models.load_model('best_model.keras')
+best_model = tf.keras.models.load_model(modelfilepath)
 
 # Evaluate the best model on the test set
 test_loss, test_acc = best_model.evaluate(test_generator, verbose=1)
 print('Test accuracy of the best model:', test_acc)
 
-test_results=model.evaluate(test_generator, verbose=0)  
-print(f'Test results - Loss: {test_results[0]} - Accuracy: {test_results[1]*100}%')
 
 predictions=model.predict(test_generator)
 binary_predictions = (predictions > 0.5)
 df_final=df_input[predictions.shape[0]*-1:]
 df_final['App_Pred']=binary_predictions
+
+
+test_results=model.evaluate(test_generator, verbose=0)  
+print(f'Test results - Loss: {test_results[0]} - Accuracy: {test_results[1]*100}%')
+
+
 print('df_final:',df_final)
 '''
 predictions.shape[0]
