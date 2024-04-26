@@ -93,6 +93,7 @@ df['trend_stc_high']=df['trend_stc']>=75
 df['trend_stc_low']=df['trend_stc']<=25
 #df_input=df[['Appliances','T_out', 'RH_1', 'Visibility']]
 #in_cols=['flag','Close','High', 'Low','trend_stc','trend_ema_fast', 'trend_ema_slow']
+
 in_cols=['flag','Close','High', 'Low','momentum_kama', 'trend_macd', 'trend_macd_signal', 'trend_macd_diff',  'trend_ema_fast', 'trend_ema_slow','trend_sma_fast', 'trend_sma_slow','trend_stc_high','trend_stc_low','trend_stc']
 in_cols=['flag','Adj Close','High', 'Low','Volume','volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'volume_em',
        'volume_sma_em', 'volume_vpt', 'volume_vwap', 'volume_mfi',
@@ -130,12 +131,58 @@ in_cols=['flag','Adj Close','High', 'Low','Volume','volume_adi', 'volume_obv', '
 
        'momentum_pvo_hist', 'momentum_kama', 'others_dr', 'others_dlr',
        'others_cr']
+in_cols=['flag','Adj Close','High', 'Low','Volume']
+in_cols=['flag','Adj Close','High', 'Low','Volume','volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'volume_em',
+       'volume_sma_em', 'volume_vpt', 'volume_vwap', 'volume_mfi',
+       'volume_nvi', 'volatility_bbm', 'volatility_bbh', 'volatility_bbl',
+       'volatility_bbw', 'volatility_bbp', 'volatility_bbhi',
+       'volatility_bbli', 'volatility_kcc', 'volatility_kch', 'volatility_kcl',
+       'volatility_kcw', 'volatility_kcp', 'volatility_kchi',
+       'volatility_kcli', 'volatility_dcl', 'volatility_dch', 'volatility_dcm',
+       'volatility_dcw', 'volatility_dcp', 'volatility_atr', 'volatility_ui',
+       'trend_macd', 'trend_macd_signal', 'trend_macd_diff', 'trend_sma_fast',
+       'trend_sma_slow', 'trend_ema_fast', 'trend_ema_slow', 
+       'trend_vortex_ind_pos', 'trend_vortex_ind_neg', 'trend_vortex_ind_diff',
+       'trend_trix', 'trend_mass_index', 'trend_dpo', 'trend_kst',
+
+       'trend_kst_sig', 'trend_kst_diff', 'trend_ichimoku_conv',
+       'trend_ichimoku_base', 'trend_ichimoku_a', 'trend_ichimoku_b',
+
+       'trend_stc', 'trend_adx', 'trend_adx_pos', 'trend_adx_neg', 'trend_cci',
+       'trend_visual_ichimoku_a', 'trend_visual_ichimoku_b', 'trend_aroon_up',#good
+
+
+
+
+       'trend_aroon_down', 'trend_aroon_ind',
+
+       #'trend_psar_up',
+       #'trend_psar_up_indicator', 
+       #'trend_psar_down',
+
+       #'trend_psar_down_indicator', 
+       'momentum_rsi', 'momentum_stoch_rsi', #good 2
+
+
+
+
+       'momentum_stoch_rsi_k', 'momentum_stoch_rsi_d', 'momentum_tsi',
+       'momentum_uo', 'momentum_stoch', 'momentum_stoch_signal', 'momentum_wr',
+
+       'momentum_ao', 'momentum_roc', 'momentum_ppo', 'momentum_ppo_signal',
+       'momentum_ppo_hist', 'momentum_pvo', 'momentum_pvo_signal',
+
+       'momentum_pvo_hist', 'momentum_kama', 'others_dr', 'others_dlr',
+       'others_cr']
 
 # add 'trend_stc' reduces accuracy
 #in_cols=['flag','Close','High', 'Low','momentum_kama', 'trend_macd', 'trend_macd_signal', 'trend_macd_diff',  'trend_ema_fast', 'trend_ema_slow','volatility_bbh', 'volatility_bbl','volatility_bbhi', 'volatility_bbli' ]
 df_input=df[in_cols]
 df_input=df_input.dropna()
 df_input.describe()
+print('----------------------------------------')
+print(df_input.iloc[-1:].index)
+print('----------------------------------------')
 #df_input.query("Appliances > 500")
 
 scaler = MinMaxScaler()
@@ -199,7 +246,7 @@ history = model.fit(train_generator, epochs=500  ,
                     shuffle=False,
                     callbacks=[early_stopping])
 '''
-history = model.fit(train_generator, epochs=5,
+history = model.fit(train_generator, epochs=500,
                     validation_data=test_generator,
                     shuffle=True,
                     callbacks=[checkpoint_callback]
@@ -222,8 +269,26 @@ print('df_final:',df_final)
 test_results=model.evaluate(test_generator, verbose=0)  
 print(f'Test results - Loss: {test_results[0]} - Accuracy: {test_results[1]*100}%')
 
+new_data = np.random.randn(1, win_length, len(in_cols))
+new_data = np.random.randn(win_length, len(in_cols))
 
+print('doing predictions.....')
 
+for i in range(len(features)-win_length, len(features)):
+
+       #new_data=features[-win_length-i:-i]
+       new_data=features[i-win_length+1:i+1]
+        
+       new_data=np.reshape(new_data, (1,new_data.shape[0],new_data.shape[1]))
+
+       predictions=model.predict(new_data)
+       binary_predictions = predictions > 0.5
+       print(df_input.iloc[i:i+1].index.to_pydatetime(),binary_predictions)
+'''
+df_final=df_input[predictions.shape[0]*-1:]
+df_final['App_Pred']=binary_predictions
+print('df_final:',df_final.tail())
+'''
 '''
 predictions.shape[0]
 print('predictions:',predictions)
