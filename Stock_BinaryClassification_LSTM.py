@@ -54,6 +54,14 @@ XLK 2000:
        Test accuracy of the best model: 0.8938053250312805
        Test results - Loss: 2.5124361515045166 - Accuracy: 76.54867172241211%
 
+       without trend_psar_*
+       Test accuracy of the best model: 0.8525469303131104
+       Test results - Loss: 1.5534933805465698 - Accuracy: 81.23324513435364%
+       
+       +'trend_psar_up_indicator', 'trend_psar_down_indicator',
+       Test accuracy of the best model: 0.8579088449478149
+       Test results - Loss: 1.027370810508728 - Accuracy: 84.9865972995758%
+
 '''    
 #df['flag2']=np.where(df['Close'].diff(2)>0, True, False)
 #df['flag5']=np.where(df['Close'].diff(5)>0, True, False)
@@ -157,10 +165,10 @@ in_cols=['flag','Adj Close','High', 'Low','Volume','volume_adi', 'volume_obv', '
        'trend_aroon_down', 'trend_aroon_ind',
 
        #'trend_psar_up',
-       #'trend_psar_up_indicator', 
+       'trend_psar_up_indicator', 
        #'trend_psar_down',
 
-       #'trend_psar_down_indicator', 
+       'trend_psar_down_indicator', 
        'momentum_rsi', 'momentum_stoch_rsi', #good 2
 
 
