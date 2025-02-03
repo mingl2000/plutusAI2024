@@ -23,7 +23,8 @@ data_pct = df[features].pct_change() * 100
 data_pct = data_pct.dropna().values  # shape: (num_days-1, num_features)
 
 # Clip the percentage changes to the range [-10, 10]
-data_pct = np.clip(data_pct, -10, 10)
+data_pct = np.clip(np.round(data_pct), -10, 10)
+
 
 # -------------------------------
 # 3. Create Sequences and Digitize Targets for Multi-Step Prediction
@@ -47,6 +48,7 @@ def create_sequences(data, seq_length, prediction_steps):
     # Ensure there are enough future days for prediction_steps
     for i in range(len(data) - seq_length - prediction_steps + 1):
         seq = data[i : i + seq_length]  # input sequence (seq_length, num_features)
+        
         target_seq = []
         for j in range(prediction_steps):
             high_pct = data[i + seq_length + j, high_index]
@@ -132,7 +134,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 # -------------------------------
 # 6. Training Loop
 # -------------------------------
-epochs = 200
+epochs = 300
 batch_size = 32
 num_batches = X_train.shape[0] // batch_size
 
@@ -185,7 +187,8 @@ with torch.no_grad():
 # Convert predicted classes to percentage changes for step 1
 predicted_pct = predicted_classes.float() - 10.0  # class 0 -> -10%, 20 -> +10%
 # Similarly, ground truth for the first prediction step:
-true_pct = y_train[:, 0, :]  # shape: (num_samples, 3)
+
+true_pct = y_train[:, 0, :]-10  # shape: (num_samples, 3)
 
 # Compute prediction error (difference in percentage points)
 error_high = predicted_pct[:, 0] - true_pct[:, 0]
@@ -257,7 +260,7 @@ plt.xlabel("Sample Index")
 plt.yticks([])  # Hide y-axis ticks
 
 plt.tight_layout()
-plt.show()
+#plt.show()
 
 # --------------------------
 # Low Price Predictions
@@ -296,7 +299,7 @@ plt.xlabel("Sample Index")
 plt.yticks([])  # Hide y-axis ticks
 
 plt.tight_layout()
-plt.show()
+#plt.show()
 
 # --------------------------
 # Close Price Predictions
