@@ -23,7 +23,7 @@ data_pct = df[features].pct_change() * 100
 data_pct = data_pct.dropna().values  # shape: (num_days-1, num_features)
 
 # Clip the percentage changes to the range [-10, 10]
-data_pct = np.clip(np.round(data_pct), -10, 10)
+data_pct = np.clip(np.round(data_pct), -20, 20)
 
 
 # -------------------------------
@@ -56,9 +56,9 @@ def create_sequences(data, seq_length, prediction_steps):
             close_pct = data[i + seq_length + j, close_index]
             
             # Digitize each target value
-            high_pct = np.clip(np.round(high_pct), -10, 10) + 10  # shift to range 0..20
-            low_pct = np.clip(np.round(low_pct), -10, 10) + 10    # shift to range 0..20
-            close_pct = np.clip(np.round(close_pct), -10, 10) + 10  # shift to range 0..20
+            high_pct = np.clip(np.round(high_pct), -20, 20) + 20  # shift to range 0..20
+            low_pct = np.clip(np.round(low_pct), -20, 20) + 20    # shift to range 0..20
+            close_pct = np.clip(np.round(close_pct), -20, 20) + 20  # shift to range 0..20
             
             target_seq.append([high_pct, low_pct, close_pct])
         X.append(seq)
@@ -67,7 +67,7 @@ def create_sequences(data, seq_length, prediction_steps):
     return np.array(X), np.array(y)
 
 seq_length = 30         # Use past 30 days as input
-prediction_steps = 2    # Predict next 2 days (multi-step prediction)
+prediction_steps = 5    # Predict next 2 days (multi-step prediction)
 X, y = create_sequences(data_pct, seq_length, prediction_steps)
 print("Input shape:", X.shape)   # (num_samples, seq_length, num_features)
 print("Target shape:", y.shape)  # (num_samples, prediction_steps, 3), each value in {0,...,20}
@@ -119,7 +119,7 @@ class TransformerTimeSeriesMultiStepClassifier(nn.Module):
         return out
 
 feature_size = len(features)  # 4 features
-num_classes = 21
+num_classes = 41
 model = TransformerTimeSeriesMultiStepClassifier(feature_size=feature_size, d_model=64,
                                                    nhead=4, num_layers=2,
                                                    num_classes=num_classes,
@@ -134,7 +134,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 # -------------------------------
 # 6. Training Loop
 # -------------------------------
-epochs = 300
+epochs = 200
 batch_size = 32
 num_batches = X_train.shape[0] // batch_size
 
@@ -185,10 +185,10 @@ with torch.no_grad():
     predicted_classes = torch.argmax(all_logits[:, 0, :, :], dim=2)  # (num_samples, 3)
     
 # Convert predicted classes to percentage changes for step 1
-predicted_pct = predicted_classes.float() - 10.0  # class 0 -> -10%, 20 -> +10%
+predicted_pct = predicted_classes.float() - 20.0  # class 0 -> -10%, 20 -> +10%
 # Similarly, ground truth for the first prediction step:
 
-true_pct = y_train[:, 0, :]-10  # shape: (num_samples, 3)
+true_pct = y_train[:, 0, :]-20  # shape: (num_samples, 3)
 
 # Compute prediction error (difference in percentage points)
 error_high = predicted_pct[:, 0] - true_pct[:, 0]
