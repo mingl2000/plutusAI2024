@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 
+no_levels=20
+
 # -------------------------------
 # 1. Download Yahoo Stock Data
 # -------------------------------
@@ -23,7 +25,7 @@ data_pct = df[features].pct_change() * 100
 data_pct = data_pct.dropna().values  # shape: (num_days-1, num_features)
 
 # Clip the percentage changes to the range [-10, 10]
-data_pct = np.clip(np.round(data_pct), -20, 20)
+data_pct = np.clip(np.round(data_pct), -no_levels, no_levels)
 
 
 # -------------------------------
@@ -38,7 +40,7 @@ def create_sequences(data, seq_length, prediction_steps):
     Digitization:
       - Round the percentage change to nearest integer,
       - Clip to [-10, 10],
-      - Shift by +10 so that -10 -> 0, 0 -> 10, +10 -> 20.
+      - Shift by +10 so that -10 -> 0, 0 -> 10, +10 -> no_levels.
     """
     X, y = [], []
     high_index = features.index("High")  # index of 'High' in data
@@ -56,9 +58,9 @@ def create_sequences(data, seq_length, prediction_steps):
             close_pct = data[i + seq_length + j, close_index]
             
             # Digitize each target value
-            high_pct = np.clip(np.round(high_pct), -20, 20) + 20  # shift to range 0..20
-            low_pct = np.clip(np.round(low_pct), -20, 20) + 20    # shift to range 0..20
-            close_pct = np.clip(np.round(close_pct), -20, 20) + 20  # shift to range 0..20
+            high_pct = np.clip(np.round(high_pct), -no_levels, no_levels) + no_levels  # shift to range 0..no_levels
+            low_pct = np.clip(np.round(low_pct), -no_levels, no_levels) + no_levels    # shift to range 0..no_levels
+            close_pct = np.clip(np.round(close_pct), -no_levels, no_levels) + no_levels  # shift to range 0..20
             
             target_seq.append([high_pct, low_pct, close_pct])
         X.append(seq)
@@ -119,7 +121,7 @@ class TransformerTimeSeriesMultiStepClassifier(nn.Module):
         return out
 
 feature_size = len(features)  # 4 features
-num_classes = 41
+num_classes = 2*no_levels+1
 model = TransformerTimeSeriesMultiStepClassifier(feature_size=feature_size, d_model=64,
                                                    nhead=4, num_layers=2,
                                                    num_classes=num_classes,
@@ -185,10 +187,10 @@ with torch.no_grad():
     predicted_classes = torch.argmax(all_logits[:, 0, :, :], dim=2)  # (num_samples, 3)
     
 # Convert predicted classes to percentage changes for step 1
-predicted_pct = predicted_classes.float() - 20.0  # class 0 -> -10%, 20 -> +10%
+predicted_pct = predicted_classes.float() - float(no_levels)  # class 0 -> -10%, 20 -> +10%
 # Similarly, ground truth for the first prediction step:
 
-true_pct = y_train[:, 0, :]-20  # shape: (num_samples, 3)
+true_pct = y_train[:, 0, :]-no_levels  # shape: (num_samples, 3)
 
 # Compute prediction error (difference in percentage points)
 error_high = predicted_pct[:, 0] - true_pct[:, 0]
