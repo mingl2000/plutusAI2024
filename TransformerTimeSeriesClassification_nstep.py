@@ -5,12 +5,12 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 
-no_levels=20
+no_levels=1000
 
 # -------------------------------
 # 1. Download Yahoo Stock Data
 # -------------------------------
-ticker = "AAPL"  # Change ticker if needed
+ticker = "000063.sz"  # Change ticker if needed
 df = yf.download(ticker, start="2020-01-01", end="2025-01-01")
 
 # We'll use four features: Open, High, Low, Close.
@@ -21,7 +21,7 @@ features = ["Open", "High", "Low", "Close"]
 # -------------------------------
 # Compute daily percentage change (in percent) for each feature.
 # (pct_change returns NaN for the first row; drop it)
-data_pct = df[features].pct_change() * 100  
+data_pct = df[features].pct_change() * 1000  
 data_pct = data_pct.dropna().values  # shape: (num_days-1, num_features)
 
 # Clip the percentage changes to the range [-10, 10]
